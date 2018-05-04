@@ -1,24 +1,18 @@
-# README
+# Test case for acts_as_paranoid + ActiveStorage
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Run `rails test` and see test/models/post_test.rb for the expected
+behaviour for deleting models using acts_as_paranoid with an attachment
+in ActiveStorage.
 
-Things you may want to cover:
+On `destroy!` you currently get:
 
-* Ruby version
+    SystemStackError: stack level too deep
+        test/models/post_test.rb:9:in `block in <class:PostTest>'
 
-* System dependencies
+As there's a loop of some sort between callbacks during the soft delete.
 
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+If the ActiveStorage attachment is given the `dependent: false` option
+then it fixes the stack error, but then loses the
+ActiveStorage::Attachment association during the soft delete (while the
+blob remains as it's no longer purged). Ideally, the Attachment would
+remain until really deleted.
